@@ -1,8 +1,6 @@
 package sakal_andrej.stromtankstellenlinz;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -16,30 +14,26 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.LinkedList;
+
+import sakal_andrej.stromtankstellenlinz.model.Station;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    LinkedList<Station> stationsList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //ReadCSV
         final String FILENAME = this.getFilesDir().getAbsolutePath()+"/convertcsv.csv";
+        ReadCsv(FILENAME, ",");
+
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-        //The floating little Message Button is this -----------------------------------------------
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        //.setAction("Action", null).show();
-                ReadCsv(FILENAME, ",");
-            }
-        });
-        //------------------------------------------------------------------------------------------
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -51,17 +45,26 @@ public class HomeActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    /**
+     * Read the CSV files with the Energy Stations
+     * @param filename
+     * @param s
+     */
     private void ReadCsv(String filename, String s) {
             String line = "";
             String[] col;
             try {
 
                 BufferedReader br = new BufferedReader(new FileReader(filename));
+                stationsList = new LinkedList<Station>();
+                //Overwrite headline
+                br.readLine();
                 while((line = br.readLine()) != null) {
                     col = line.split(s);
-
-                    for (int i = 0; i < col.length;i++)
-                        System.out.println(col[i] + i + " PAUSE");
+                    for (int i = 0; i < col.length;i++) {
+                        Station station = new Station(col[1], col[3],col[8]);
+                        stationsList.add(station);
+                    }
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
