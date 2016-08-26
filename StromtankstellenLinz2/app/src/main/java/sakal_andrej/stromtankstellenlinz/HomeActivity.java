@@ -8,12 +8,18 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -25,21 +31,40 @@ import sakal_andrej.stromtankstellenlinz.model.Model;
 import sakal_andrej.stromtankstellenlinz.model.Station;
 
 public class HomeActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, GoogleApiClient.ConnectionCallbacks {
 
+    private static final String TAG = "";
+
+    //Names of the Energy Stations
     ArrayList<String> stationsNames;
+    //Shows the Energy Station names
     ListView lv;
+
+
+    private GoogleApiClient mGoogleApiClient;
+
+    private LocationRequest mLocationRequest;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         lv = (ListView) findViewById(R.id.lvShowStations);
-        //ReadCSV
+
+        //ReadCSV ----------------------
         final String FILENAME = this.getFilesDir().getAbsolutePath()+"/convertcsv.csv";
         ReadCsv(FILENAME, ",");
         ArrayAdapter<String> la = new ArrayAdapter<String>(HomeActivity.this, android.R.layout.simple_list_item_2,android.R.id.text1,stationsNames);
 
+
+        // Create an instance of GoogleAPIClient. ---------------------
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                //.addConnectionCallbacks(HomeActivity.this)
+                .addOnConnectionFailedListener((GoogleApiClient.OnConnectionFailedListener) this)
+                .build();
 
         lv.setAdapter(la);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -149,5 +174,35 @@ public class HomeActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Connect the client.
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        // Disconnecting the client invalidates it.
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+
+        mLocationRequest = LocationRequest.create();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(1000); // Update location every second
+
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                mGoogleApiClient, mLocationRequest, (LocationListener) this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.i(TAG, "GoogleApiClient connection has been suspend");
     }
 }
