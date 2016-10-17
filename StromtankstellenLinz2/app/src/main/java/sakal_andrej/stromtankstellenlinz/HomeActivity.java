@@ -1,6 +1,7 @@
 package sakal_andrej.stromtankstellenlinz;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -15,9 +16,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
@@ -58,13 +59,14 @@ public class HomeActivity extends AppCompatActivity
         ReadCsv(FILENAME, ",");
         ArrayAdapter<String> la = new ArrayAdapter<String>(HomeActivity.this, android.R.layout.simple_list_item_2,android.R.id.text1,stationsNames);
 
-
-        // Create an instance of GoogleAPIClient. ---------------------
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                //.addConnectionCallbacks(HomeActivity.this)
-                .addOnConnectionFailedListener((GoogleApiClient.OnConnectionFailedListener) this)
-                .build();
+        // Create an instance of GoogleAPIClient.
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    //.addOnConnectionFailedListener((GoogleApiClient.OnConnectionFailedListener) this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
 
         lv.setAdapter(la);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -176,29 +178,26 @@ public class HomeActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
     protected void onStart() {
-        super.onStart();
-        // Connect the client.
         mGoogleApiClient.connect();
+        super.onStart();
     }
 
-    @Override
     protected void onStop() {
-        // Disconnecting the client invalidates it.
         mGoogleApiClient.disconnect();
         super.onStop();
     }
 
+
     @Override
-    public void onConnected(Bundle bundle) {
-
-        mLocationRequest = LocationRequest.create();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(1000); // Update location every second
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, (LocationListener) this);
+    public void onConnected(Bundle connectionHint) {
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (mLastLocation != null) {
+            //mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
+            TextView t = (TextView) findViewById(R.id.tvName);
+            t.setText( String.valueOf(mLastLocation.getLatitude()));
+        }
     }
 
     @Override
